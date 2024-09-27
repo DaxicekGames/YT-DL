@@ -1,7 +1,7 @@
 import yt_dlp
 
 def format(formats):
-    print("\nAvalible resolution and format IDs:")
+    print("\nAvalible resolutions (mp4):")
     prev_res = None
     basic_formats = {0:0}
     basic_choice = True
@@ -13,7 +13,7 @@ def format(formats):
     
     while True:
         try:
-            choice_prompt = input('\nEnter format number (type "all" for all avalible formats): ')
+            choice_prompt = input('\nEnter resolution number (type "all" for all avalible formats): ')
             if choice_prompt.lower() == "all":
                 basic_choice = False
                 for i, format in enumerate(formats):  
@@ -35,13 +35,13 @@ def format(formats):
         except ValueError:
             print("Please enter valid number...")
 
-def yt_download(url, typ):
+def yt_download(url: str, typ: str, info):
+    if typ == None: typ = "v"
+
     ydl_opts = {}
 
     try:
         with yt_dlp.YoutubeDL() as ydl:
-            # Získání informací o videu nebo playlistu
-            info = ydl.extract_info(url, download=False)
 
             # Kontrola, zda jde o playlist nebo jedno video
             if 'entries' in info:
@@ -51,7 +51,6 @@ def yt_download(url, typ):
                 videos = [info]  # Pokud je to jedno video
 
             for video in videos:
-                print(f"Downloading video: {video['title']}")
 
                 match typ:
                     case 'v':
@@ -79,10 +78,41 @@ def yt_download(url, typ):
         print(f"Error occured: {e}")
 
 def main():
-    url = input("Enter video or playlist URL: ")
-    typ = input("Do you want to download [v]ideo or [a]udio: ").lower()[0]
+    print("""
+    ╔═══════════════════YT-DL═══════════════════╗
+    ║Download Youtube videos in high resolution!║
+    ║                                           ║
+    ║Created by: Daxicek                        ║
+    ║Using: yt_dlp, FFmpeg                      ║
+    ╚═══════════════════════════════════════════╝
+          """)
     
-    yt_download(url, typ)
+
+    url = input("Enter video or playlist URL: ")
+    while url != "":
+        print("Loading info...")
+        video_info = yt_dlp.YoutubeDL().extract_info(url, download=False)
+        title_info = video_info['title']
+
+        title_len = int(len(title_info)) if len(title_info) % 2 == 0 else int(len(title_info)+1)
+        title = "    ╔"
+        for _ in range(int(title_len/2)-2): title += "═"
+        title += "TITLE"
+        for _ in range(int(title_len/2)-3): title += "═"
+        title += "╗\n"
+        title += "    ║" + title_info if len(title_info) % 2 == 0 else ("    ║" + title_info + " ")
+        title += "║\n" + "    ╚"
+        for _ in range(title_len): title += "═"
+        title += "╝"
+
+        print(f"\n{title}\n")
+
+        typ = input("Do you want to download [v]ideo or [a]udio: ")
+        
+        yt_download(url, typ, video_info)
+
+        url = input("\nEnter video or playlist URL (press enter to exit): ")
+
 
 if __name__ == "__main__":
     main()
