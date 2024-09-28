@@ -1,5 +1,5 @@
 # YT-DL
-Simple but powerfull TUI client for downloading YouTube videos...
+Simple but powerfull TUI client used to download YouTube videos for Windows...
 
 ## Functions
 - Download Youtube videos
@@ -28,5 +28,6 @@ FFmpeg is technically not required, but it's highly recommended. **Without FFmpe
 ###
 Installation using PIP:
 `pip install ffmpeg`
+`pip install ffmpeg-python`
 
-If you are **experiencing issues** with FFmpeg, try **running the program directly from command line** using `python ytdl.py` or `python3 ytdl.py` in the directory with your program and not by double clicking the file.
+It's important to run the program directly from the command line using `python ytdl.py` or `python3 ytdl.py`. Without that FFmpeg won't work properly!
