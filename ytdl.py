@@ -1,4 +1,28 @@
 import yt_dlp
+import ffmpeg
+import os
+import re
+
+def file_name_lagalizer(text):
+    # Regulární výraz: povolena čísla, písmena s diakritikou, závorky a tečky
+    pattern = r'[^0-9a-zA-Zá-žÁ-Ž().\-\s]'
+    # Nahraď vše, co neodpovídá povoleným znakům, prázdným řetězcem
+    out_text = re.sub(pattern, '', text)
+    return out_text
+
+def convert_acodec(input_file, output_file):
+    print("Starting audio codec convertion...")
+
+    # Načtení vstupního videa
+    stream = ffmpeg.input(input_file)
+    
+    # Nastavení zvukového kodeku na nový (výchozí: mp3)
+    stream = ffmpeg.output(stream, output_file, acodec='mp3', vcodec='copy')
+    
+    # Spuštění převodu
+    ffmpeg.run(stream, quiet=True)
+    
+    print(f"Audio codec convertion completed!")
 
 def format(formats):
     print("\nAvalible resolutions (mp4):")
@@ -36,7 +60,8 @@ def format(formats):
             print("Please enter valid number...")
 
 def yt_download(url: str, typ: str, info):
-    if typ == None: typ = "v"
+    convert_acodec = False
+    if typ == "": typ = "v"
 
     ydl_opts = {}
 
@@ -54,13 +79,14 @@ def yt_download(url: str, typ: str, info):
 
                 match typ:
                     case 'v':
+                        convert_acodec = True
                         # Výpis dostupných formátů
                         format_id = format(video['formats'])
                         # Stáhnout nejlepší video i audio a sloučit je dohromady
-                        ydl_opts = {'format': f'{format_id}+bestaudio', 'merge_output_format': 'mp4'}
+                        ydl_opts = {'format': f'{format_id}+bestaudio', 'merge_output_format': 'mp4', 'outtmpl': 'temp.mp4'}
                     case 'a':
                         # Pouze audio
-                        ydl_opts = {'format': 'bestaudio', 'postprocessors': [{
+                        ydl_opts = {'format': 'bestaudio', 'outtmpl': file_name_lagalizer(video['title']), 'postprocessors': [{
                             'key': 'FFmpegExtractAudio',
                             'preferredcodec': 'mp3',
                             'preferredquality': '192',
@@ -73,6 +99,10 @@ def yt_download(url: str, typ: str, info):
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                     ydl.download([video['webpage_url']])
                 print(f"Download has finished: {video['title']}")
+                
+                if convert_acodec:
+                    convert_acodec("temp.mp4", f"{file_name_lagalizer(video['title'])}.mp4")
+                    os.remove("temp.mp4")
 
     except Exception as e:
         print(f"Error occured: {e}")
@@ -91,16 +121,17 @@ def main():
     url = input("Enter video or playlist URL: ")
     while url != "":
         print("Loading info...")
+
         video_info = yt_dlp.YoutubeDL().extract_info(url, download=False)
         title_info = video_info['title']
-
+        
         title_len = int(len(title_info)) if len(title_info) % 2 == 0 else int(len(title_info)+1)
         title = "    ╔"
         for _ in range(int(title_len/2)-2): title += "═"
-        title += "TITLE"
+        title += "VIDEO"
         for _ in range(int(title_len/2)-3): title += "═"
-        title += "╗\n"
-        title += "    ║" + title_info if len(title_info) % 2 == 0 else ("    ║" + title_info + " ")
+        title += "╗"
+        title += "\n    ║" + title_info if len(title_info) % 2 == 0 else ("    ║" + title_info + " ")
         title += "║\n" + "    ╚"
         for _ in range(title_len): title += "═"
         title += "╝"
@@ -108,11 +139,14 @@ def main():
         print(f"\n{title}\n")
 
         typ = input("Do you want to download [v]ideo or [a]udio: ")
-        
         yt_download(url, typ, video_info)
+            
 
         url = input("\nEnter video or playlist URL (press enter to exit): ")
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\nExiting...")
