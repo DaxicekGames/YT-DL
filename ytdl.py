@@ -60,7 +60,7 @@ def format(formats):
             print("Please enter valid number...")
 
 def yt_download(url: str, typ: str, info):
-    convert_acodec = False
+    need_convert_acodec = False
     if typ == "": typ = "v"
 
     ydl_opts = {}
@@ -79,7 +79,7 @@ def yt_download(url: str, typ: str, info):
 
                 match typ:
                     case 'v':
-                        convert_acodec = True
+                        need_convert_acodec = True
                         # Výpis dostupných formátů
                         format_id = format(video['formats'])
                         # Stáhnout nejlepší video i audio a sloučit je dohromady
@@ -100,7 +100,7 @@ def yt_download(url: str, typ: str, info):
                     ydl.download([video['webpage_url']])
                 print(f"Download has finished: {video['title']}")
                 
-                if convert_acodec:
+                if need_convert_acodec:
                     convert_acodec("temp.mp4", f"{file_name_lagalizer(video['title'])}.mp4")
                     os.remove("temp.mp4")
 
