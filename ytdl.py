@@ -1,7 +1,13 @@
-import yt_dlp
-import ffmpeg
-import os
-import re
+try:
+    import yt_dlp
+    import ffmpeg
+    import os
+    import re
+except:
+    input('Missing dependencies... \nRun "INSTALL DEPENDENCIES.bat" first!\n(press Enter to exit)')
+    quit()
+
+preffered_acodec = "mp3"
 
 def file_name_lagalizer(text):
     # Regulární výraz: povolena čísla, písmena s diakritikou, závorky a tečky
@@ -10,14 +16,14 @@ def file_name_lagalizer(text):
     out_text = re.sub(pattern, '', text)
     return out_text
 
-def convert_acodec(input_file, output_file):
+def convert_acodec(input_file, output_file, target_codec):
     print("Starting audio codec convertion...")
 
     # Načtení vstupního videa
     stream = ffmpeg.input(input_file)
     
     # Nastavení zvukového kodeku na nový (výchozí: mp3)
-    stream = ffmpeg.output(stream, output_file, acodec='mp3', vcodec='copy')
+    stream = ffmpeg.output(stream, output_file, acodec=target_codec, vcodec='copy')
     
     # Spuštění převodu
     ffmpeg.run(stream, quiet=True)
@@ -25,6 +31,7 @@ def convert_acodec(input_file, output_file):
     print(f"Audio codec convertion completed!")
 
 def format(formats):
+    global preffered_acodec
     print("\nAvalible resolutions (mp4):")
     prev_res = None
     basic_formats = {0:0}
@@ -36,32 +43,46 @@ def format(formats):
             basic_formats.update({(i+1):(list(basic_formats.values())[-1]+1)})
     
     while True:
+        choice_prompt = input('\nEnter resolution number (type "all" for all avalible formats and to choose audio codec): ')
+        choice_prompt = choice_prompt.split(" ")
+
         try:
-            choice_prompt = input('\nEnter resolution number (type "all" for all avalible formats): ')
-            if choice_prompt.lower() == "all":
+            if choice_prompt[0] != "all": int(choice_prompt[0])
+
+            if choice_prompt[0].lower() == "all":
                 basic_choice = False
                 for i, format in enumerate(formats):  
                     print(f"{i + 1}: {format['format']} - {format['resolution']} ({format['ext']})")
+                print("\nAudio codecs (seperate by space):\n1: mp3 (reccomended, default)\n2: aac\n3: No convertion - Opus (fastest, not widely supported)")
             elif basic_choice == False:
-                choice = int(choice_prompt) - 1
-                if 0 <= choice < len(formats):
-                    return formats[choice]['format_id']
-                else:
-                    if choice != 0:
-                        print("Invalid selection, try again...")
-            else:
-                choice = int(list(basic_formats.keys())[list(basic_formats.values()).index(int(choice_prompt))]) - 1
-                if 0 <= choice < len(formats):
-                    return formats[choice]['format_id']
-                else:
-                    if choice != 0:
-                        print("Invalid selection, try again...")
-        except ValueError:
-            print("Please enter valid number...")
+                choice = int(choice_prompt[0]) - 1
+                try:
+                    match choice_prompt[1]:
+                        case "1":
+                            preffered_acodec = "mp3"
+                        case "2":
+                            preffered_acodec = "aac"
+                        case "3":
+                            preffered_acodec = "opus"
+                        case _:
+                            preffered_acodec = "mp3"
+                except: ...
 
-def yt_download(url: str, typ: str, info):
+                return formats[choice]['format_id']       
+
+            else:
+                choice = int(list(basic_formats.keys())[list(basic_formats.values()).index(int(choice_prompt[0]))]) - 1
+                return formats[choice]['format_id']
+        except:
+            print("Invalid selection! Try again...")
+
+
+
+
+
+def yt_download(typ: str, info):
     need_convert_acodec = False
-    if typ == "": typ = "v"
+    
 
     ydl_opts = {}
 
@@ -91,17 +112,16 @@ def yt_download(url: str, typ: str, info):
                             'preferredcodec': 'mp3',
                             'preferredquality': '192',
                         }]}
-                    case _:
-                        print("Invalid selection...")
-                        return
 
                 # Spustit stažení jednotlivých videí nebo audia
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                     ydl.download([video['webpage_url']])
                 print(f"Download has finished: {video['title']}")
                 
-                if need_convert_acodec:
-                    convert_acodec("temp.mp4", f"{file_name_lagalizer(video['title'])}.mp4")
+                if preffered_acodec == "opus":
+                    os.rename("temp.mp4", f"{file_name_lagalizer(video['title'])}.mp4")
+                elif need_convert_acodec:
+                    convert_acodec("temp.mp4", f"{file_name_lagalizer(video['title'])}.mp4", preffered_acodec)
                     os.remove("temp.mp4")
 
     except Exception as e:
@@ -121,26 +141,29 @@ def main():
     url = input("Enter video or playlist URL: ")
     while url != "":
         print("Loading info...")
+        try:
+            video_info = yt_dlp.YoutubeDL().extract_info(url, download=False)
+            title_info = video_info['title']
 
-        video_info = yt_dlp.YoutubeDL().extract_info(url, download=False)
-        title_info = video_info['title']
-        
-        title_len = int(len(title_info)) if len(title_info) % 2 == 0 else int(len(title_info)+1)
-        title = "    ╔"
-        for _ in range(int(title_len/2)-2): title += "═"
-        title += "VIDEO"
-        for _ in range(int(title_len/2)-3): title += "═"
-        title += "╗"
-        title += "\n    ║" + title_info if len(title_info) % 2 == 0 else ("    ║" + title_info + " ")
-        title += "║\n" + "    ╚"
-        for _ in range(title_len): title += "═"
-        title += "╝"
+            title_len = int(len(title_info)) if len(title_info) % 2 == 0 else int(len(title_info)+1)
+            title = "    ╔"
+            for _ in range(int(title_len/2)-2): title += "═"
+            title += "VIDEO"
+            for _ in range(int(title_len/2)-3): title += "═"
+            title += "╗"
+            title += "\n    ║" + title_info if len(title_info) % 2 == 0 else ("\n    ║" + title_info + " ")
+            title += "║\n" + "    ╚"
+            for _ in range(title_len): title += "═"
+            title += "╝"
 
-        print(f"\n{title}\n")
+            print(f"\n{title}\n")
 
-        typ = input("Do you want to download [v]ideo or [a]udio: ")
-        yt_download(url, typ, video_info)
+            typ = input("Do you want to download [v]ideo or [a]udio: ")
+            if (typ == "") or (typ.lower()[0] != "a" and typ.lower()[0] != "v"): typ = "v"
             
+            yt_download(typ, video_info)
+        except: 
+            print("\nSomething went wrong, please try again...")
 
         url = input("\nEnter video or playlist URL (press enter to exit): ")
 
