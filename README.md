@@ -9,6 +9,9 @@ Simple but powerfull TUI client used to download YouTube videos for Windows...
 - Unlimited video length and size
 
 ## Dependences
+
+**Install all dependencies by running "INSTALL DEPENDENCIES.bat"**
+
 **Dependencies:** yt_dlp, FFmpeg
 _(all dependencies are included in main release by default)_
 
