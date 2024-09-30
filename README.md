@@ -2,20 +2,22 @@
 Simple but powerfull TUI client used to download YouTube videos for Windows...
 
 ## Functions
-- Download Youtube videos
+- Download Youtube videos and shorts
 - Choose resolution and format
-- Download entier playlist
+- Download all videos playlist
 - Download only audio
 - Unlimited video length and size
 
-## Dependences
+## Requirements
 
-**Install all dependencies by running "INSTALL DEPENDENCIES.bat"**
-
-**Dependencies:** yt_dlp, FFmpeg
-_(all dependencies are included in main release by default)_
+**OS:** Windows
 
 **Recommended Python version: 3.10+**
+
+**Dependencies:** yt_dlp, FFmpeg
+
+**Install all dependencies using PIP by running "INSTALL DEPENDENCIES.bat"**
+
 
 
 
@@ -33,4 +35,4 @@ Installation using PIP:
 `pip install ffmpeg`
 `pip install ffmpeg-python`
 
-It's important to run the program directly from the command line using `python ytdl.py` or `python3 ytdl.py`. Without that FFmpeg won't work properly!
+It's important to run the program using "RUN.bat" or directly from the command line using `python ytdl.py` or `python3 ytdl.py`. Without that FFmpeg won't work properly!
