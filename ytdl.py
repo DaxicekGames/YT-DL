@@ -4,10 +4,12 @@ try:
     import os
     import re
 except:
-    input('Missing dependencies... \nRun "INSTALL DEPENDENCIES.bat" first!\n(press Enter to exit)')
+    input('Missing dependencies... \nIf you are running thist program for the first time, run "INSTALL DEPENDENCIES.bat" first!\nMake sure to run this program using "RUN.bat" or command line\n(press Enter to exit)')
     quit()
 
 preffered_acodec = "mp3"
+keep_format = False
+kept_format = None
 
 def file_name_lagalizer(text):
     # Regulární výraz: povolena čísla, písmena s diakritikou, závorky a tečky
@@ -31,16 +33,23 @@ def convert_acodec(input_file, output_file, target_codec):
     print(f"Audio codec convertion completed!")
 
 def format(formats):
-    global preffered_acodec
-    print("\nAvalible resolutions (mp4):")
+    global keep_format, kept_format, preffered_acodec
+
     prev_res = None
     basic_formats = {0:0}
     basic_choice = True
+
+    if kept_format != None:
+        for i, format in enumerate(formats):  
+            if format['format_id'] == kept_format:
+                return kept_format
+    print("\nAvalible resolutions (mp4):")
     for i, format in enumerate(formats):
         if format['vcodec'] != 'none' and "mp4" in format['ext'] and "p" in format['format'] and prev_res != format['resolution']:  # Formáty s videem
             print(f"{(list(basic_formats.values())[-1]+1)}: {format['format']}")
             prev_res = format['resolution']
             basic_formats.update({(i+1):(list(basic_formats.values())[-1]+1)})
+
     
     while True:
         choice_prompt = input('\nEnter resolution number (type "all" for all avalible formats and to choose audio codec): ')
@@ -68,10 +77,15 @@ def format(formats):
                             preffered_acodec = "mp3"
                 except: ...
 
-                return formats[choice]['format_id']       
+                if keep_format: kept_format = formats[choice]['format_id']
+                keep_format = False
+                return formats[choice]['format_id']
 
             else:
                 choice = int(list(basic_formats.keys())[list(basic_formats.values()).index(int(choice_prompt[0]))]) - 1
+                if keep_format: kept_format = formats[choice]['format_id']
+                keep_format = False
+
                 return formats[choice]['format_id']
         except:
             print("Invalid selection! Try again...")
@@ -81,6 +95,7 @@ def format(formats):
 
 
 def yt_download(typ: str, info):
+    global keep_format
     need_convert_acodec = False
     
 
@@ -93,6 +108,7 @@ def yt_download(typ: str, info):
             if 'entries' in info:
                 print(f"Processing playlist: {info['title']}")
                 videos = info['entries']
+                keep_format = True
             else:
                 videos = [info]  # Pokud je to jedno video
 
@@ -128,6 +144,8 @@ def yt_download(typ: str, info):
         print(f"Error occured: {e}")
 
 def main():
+    global keep_format, kept_format
+
     print("""
     ╔═══════════════════YT-DL═══════════════════╗
     ║Download Youtube videos in high resolution!║
@@ -165,6 +183,8 @@ def main():
         except: 
             print("\nSomething went wrong, please try again...")
 
+        keep_format = False
+        kept_format = None
         url = input("\nEnter video or playlist URL (press enter to exit): ")
 
 
