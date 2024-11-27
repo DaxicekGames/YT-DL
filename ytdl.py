@@ -1,11 +1,25 @@
+print("Loading libraries...")
+import os
+
 try:
     import yt_dlp
     import ffmpeg
-    import os
     import re
 except:
-    input('Missing dependencies... \nIf you are running thist program for the first time, run "INSTALL DEPENDENCIES.bat" first!\nMake sure to run this program using "RUN.bat" or command line\n(press Enter to exit)')
-    quit()
+    print('Missing dependencies detected!\n')
+    print('Installing ffmpeg')
+    os.system("pip install ffmpeg")
+    print('Installing ffmpeg-python')
+    os.system("pip install ffmpeg-python")
+    print('Installing yt_dlp')
+    os.system("pip install yt_dlp")
+    try:
+        import yt_dlp
+        import ffmpeg
+        import re
+    except:
+        input("Something went wrong! (press Enter to exit)")
+        quit()
 
 preffered_acodec = "mp3"
 keep_format = False
@@ -92,7 +106,13 @@ def format(formats):
 
 
 
-
+def move_to_downloads(file_name: str):
+    if not os.path.exists(r".\Downloads"):
+        os.mkdir(r".\Downloads")
+    try:
+        os.replace(rf".\{file_name}", rf".\Downloads\{file_name}")
+    except:
+        print("An error occured during moving file...")
 
 def yt_download(typ: str, info):
     global keep_format
@@ -136,8 +156,10 @@ def yt_download(typ: str, info):
                 
                 if preffered_acodec == "opus":
                     os.rename("temp.mp4", f"{file_name_lagalizer(video['title'])}.mp4")
+                    move_to_downloads(f"{file_name_lagalizer(video['title'])}.mp4")
                 elif need_convert_acodec:
                     convert_acodec("temp.mp4", f"{file_name_lagalizer(video['title'])}.mp4", preffered_acodec)
+                    move_to_downloads(f"{file_name_lagalizer(video['title'])}.mp4")
                     os.remove("temp.mp4")
 
     except Exception as e:
@@ -178,7 +200,7 @@ def main():
 
             typ = input("Do you want to download [v]ideo or [a]udio: ")
             if (typ == "") or (typ.lower()[0] != "a" and typ.lower()[0] != "v"): typ = "v"
-            
+        
             yt_download(typ, video_info)
         except: 
             print("\nSomething went wrong, please try again...")
