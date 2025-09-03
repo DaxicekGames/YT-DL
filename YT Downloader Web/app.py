@@ -28,7 +28,7 @@ def video_info():
     data = request.json
     url = data.get("url")
     if not url:
-        return jsonify({"error": "URL není zadána"}), 400
+        return jsonify({"error": "URL is missing!"}), 400
 
     try:
         with yt_dlp.YoutubeDL({'quiet': True}) as ydl:
@@ -37,9 +37,9 @@ def video_info():
             if '_type' in info and info['_type'] == 'playlist':
                 title = info.get('title', 'Playlist')
                 count = len(info.get('entries', []))
-                return jsonify({"title": f"Playlist: {title} ({count} videí)", "is_playlist": True})
+                return jsonify({"title": f"Playlist: {title} ({count} videos)", "is_playlist": True})
 
-            # Získání všech rozlišení
+            # get all res
             resolutions = sorted(
                 {f.get("height") for f in info.get("formats", []) if f.get("height")},
                 reverse=True
@@ -47,7 +47,7 @@ def video_info():
             qualities = [str(r) for r in resolutions]
 
             return jsonify({
-                "title": info.get("title", "Neznámý název"),
+                "title": info.get("title", "Unknown name"),
                 "is_playlist": False,
                 "qualities": qualities or ["best"]
             })
@@ -105,13 +105,13 @@ def download():
             return send_file(zip_path, as_attachment=True, download_name="playlist.zip")
 
     except Exception as e:
-        return f"Chyba při stahování: {str(e)}", 500
+        return f"Error occured during downloading: {str(e)}", 500
 
 
-# 🧹 Čištění složky downloads
+# downloads cleaning
 def clean_downloads():
     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    print(f"[{now}] Spouštím čištění složky downloads...")
+    print(f"[{now}] Cleaning downloads folder...")
 
     for item in os.listdir(DOWNLOAD_FOLDER):
         item_path = os.path.join(DOWNLOAD_FOLDER, item)
@@ -121,9 +121,9 @@ def clean_downloads():
             elif os.path.isfile(item_path):
                 os.remove(item_path)
         except Exception as e:
-            print(f"⚠️ Nepodařilo se smazat {item}: {e}")
+            print(f"⚠️ Could not delete {item}: {e}")
 
-# 🕒 Naplánování denního čištění
+# schedule cleaning
 class Config:
     SCHEDULER_API_ENABLED = True
 
@@ -135,3 +135,4 @@ scheduler.add_job(id='daily_cleanup', func=clean_downloads, trigger='cron', hour
 if __name__ == "__main__":
     app.config.from_object(Config())
     app.run(host="0.0.0.0", port=5050)
+
