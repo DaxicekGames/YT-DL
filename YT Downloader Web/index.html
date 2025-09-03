@@ -2,7 +2,7 @@
 <html lang="cs">
 <head>
   <meta charset="UTF-8">
-  <title>Stahovač videí</title>
+  <title>YT-DL Web</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="static/favicon.ico" type="image/x-icon">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
@@ -123,10 +123,10 @@
   </style>
 </head>
 <body>
-  <h1>Stahuj!</h1>
+  <h1>YT-DL Web</h1>
   <div class="container">
-    <input type="text" id="videoUrl" placeholder="Vlož odkaz...">
-    <button onclick="fetchInfo()">Načíst video</button>
+    <input type="text" id="videoUrl" placeholder="Video link">
+    <button onclick="fetchInfo()">Load video</button>
 
     <div id="status"></div>
     <div id="progressBar"><div id="progressInner"></div></div>
@@ -135,23 +135,23 @@
       <div class="title" id="videoTitle"></div>
       <div id="videoPlayer"></div>
 
-      <label for="format">Formát:</label>
+      <label for="format">Format:</label>
       <select id="format" onchange="toggleQualityVisibility()">
         <option value="mp4">Video (.mp4)</option>
         <option value="webm">Video (.webm)</option>
-        <option value="mp3">Zvuk (.mp3)</option>
+        <option value="mp3">Audio (.mp3)</option>
       </select>
 
       <div id="qualitySection">
-        <label for="quality">Kvalita:</label>
+        <label for="quality">Resolution:</label>
         <select id="quality"></select>
       </div>
 
-      <button onclick="downloadVideo()">Stáhnout</button>
+      <button onclick="downloadVideo()">Download</button>
     </div>
   </div>
 
-  <div class="footer">2025© &mdash; Vytvořil: Jan Gruner s laskavou pomocí ChatGPT❤️</div>
+  <div class="footer">2025© &mdash; Created by: Jan Gruner with generous help of ChatGPT❤️</div>
 
   <script>
     function setStatus(msg) {
@@ -178,9 +178,9 @@
 
     async function fetchInfo() {
       const url = document.getElementById("videoUrl").value;
-      if (!url) return alert("Zadej odkaz na video.");
+      if (!url) return alert("Input video link.");
 
-      setStatus("Načítám informace o videu...");
+      setStatus("Loading info...");
       setProgress(20);
 
       const res = await fetch("/api/info", {
@@ -193,7 +193,7 @@
       setProgress(0);
       setStatus("");
 
-      if (data.error) return alert("Chyba: " + data.error);
+      if (data.error) return alert("Error: " + data.error);
 
       document.getElementById("videoTitle").innerText = data.title;
       document.getElementById("videoInfo").style.display = "block";
@@ -206,7 +206,7 @@
       (data.qualities || []).forEach(q => {
         const opt = document.createElement("option");
         opt.value = q;
-        opt.innerText = q === "best" ? "Nejvyšší dostupná" : q + "p";
+        opt.innerText = q === "best" ? "Highest" : q + "p";
         quality.appendChild(opt);
       });
 
@@ -218,7 +218,7 @@
       const format = document.getElementById("format").value;
       const quality = document.getElementById("quality").value;
 
-      setStatus("Připravuje se stahování...");
+      setStatus("Preparing for download...");
       setProgress(50);
 
       setTimeout(() => {
@@ -233,3 +233,4 @@
   </script>
 </body>
 </html>
+
