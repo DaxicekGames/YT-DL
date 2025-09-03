@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <title>Stahovač videí</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="static/favicon.ico" type="image/x-icon">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(to right, #667eea, #764ba2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      color: #fff;
+      padding: 1rem;
+      box-sizing: border-box;
+    }
+
+    h1 {
+      font-size: 3.5rem;
+      margin: 2rem 0 1rem;
+      text-shadow: 1px 1px 8px rgba(0,0,0,0.5);
+      animation: fadeIn 0.8s ease forwards;
+      text-align: center;
+    }
+
+    .container {
+      background-color: rgba(0,0,0,0.4);
+      padding: 2rem;
+      border-radius: 16px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+      width: 100%;
+      max-width: 500px;
+      animation: fadeIn 0.6s ease-out forwards;
+      box-sizing: border-box;
+    }
+
+    @keyframes fadeIn {
+      from {opacity: 0; transform: scale(0.95);}
+      to {opacity: 1; transform: scale(1);}
+    }
+
+    input, select, button {
+      width: 100%;
+      margin-bottom: 1rem;
+      padding: 0.8rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+
+    input, select {
+      background-color: #fff;
+      color: #333;
+    }
+
+    button {
+      background-color: #00d2ff;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background-color: #03a9f4;
+    }
+
+    .title {
+      text-align: center;
+      margin-bottom: 1rem;
+      font-style: italic;
+    }
+
+    #status {
+      text-align: center;
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+      color: #ddd;
+    }
+
+    #progressBar {
+      width: 100%;
+      height: 10px;
+      background-color: #555;
+      border-radius: 5px;
+      overflow: hidden;
+      margin-bottom: 1rem;
+      display: none;
+    }
+
+    #progressInner {
+      height: 100%;
+      width: 0%;
+      background-color: #00ff99;
+      transition: width 0.4s ease;
+    }
+
+    .footer {
+      margin-top: auto;
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.85rem;
+      color: #eee;
+      opacity: 0.7;
+    }
+
+    .fade-in {
+      animation: fadeIn 0.3s ease forwards;
+    }
+
+    iframe {
+      display: block;
+      margin: 1rem auto;
+      border-radius: 10px;
+      max-width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <h1>Stahuj!</h1>
+  <div class="container">
+    <input type="text" id="videoUrl" placeholder="Vlož odkaz...">
+    <button onclick="fetchInfo()">Načíst video</button>
+
+    <div id="status"></div>
+    <div id="progressBar"><div id="progressInner"></div></div>
+
+    <div id="videoInfo" class="fade-in" style="display:none">
+      <div class="title" id="videoTitle"></div>
+      <div id="videoPlayer"></div>
+
+      <label for="format">Formát:</label>
+      <select id="format" onchange="toggleQualityVisibility()">
+        <option value="mp4">Video (.mp4)</option>
+        <option value="webm">Video (.webm)</option>
+        <option value="mp3">Zvuk (.mp3)</option>
+      </select>
+
+      <div id="qualitySection">
+        <label for="quality">Kvalita:</label>
+        <select id="quality"></select>
+      </div>
+
+      <button onclick="downloadVideo()">Stáhnout</button>
+    </div>
+  </div>
+
+  <div class="footer">2025© &mdash; Vytvořil: Jan Gruner s laskavou pomocí ChatGPT❤️</div>
+
+  <script>
+    function setStatus(msg) {
+      const status = document.getElementById("status");
+      status.innerText = msg;
+    }
+
+    function setProgress(percent) {
+      const bar = document.getElementById("progressBar");
+      const inner = document.getElementById("progressInner");
+      if (percent === 0) {
+        bar.style.display = "none";
+        inner.style.width = "0%";
+      } else {
+        bar.style.display = "block";
+        inner.style.width = percent + "%";
+      }
+    }
+
+    function toggleQualityVisibility() {
+      const format = document.getElementById("format").value;
+      document.getElementById("qualitySection").style.display = (format === "mp3") ? "none" : "block";
+    }
+
+    async function fetchInfo() {
+      const url = document.getElementById("videoUrl").value;
+      if (!url) return alert("Zadej odkaz na video.");
+
+      setStatus("Načítám informace o videu...");
+      setProgress(20);
+
+      const res = await fetch("/api/info", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({url})
+      });
+
+      const data = await res.json();
+      setProgress(0);
+      setStatus("");
+
+      if (data.error) return alert("Chyba: " + data.error);
+
+      document.getElementById("videoTitle").innerText = data.title;
+      document.getElementById("videoInfo").style.display = "block";
+
+      const vidId = (new URL(url)).searchParams.get("v") || url.split("/").pop();
+      document.getElementById("videoPlayer").innerHTML = `<iframe width="100%" height="250" src="https://www.youtube.com/embed/${vidId}" frameborder="0" allowfullscreen></iframe>`;
+
+      const quality = document.getElementById("quality");
+      quality.innerHTML = "";
+      (data.qualities || []).forEach(q => {
+        const opt = document.createElement("option");
+        opt.value = q;
+        opt.innerText = q === "best" ? "Nejvyšší dostupná" : q + "p";
+        quality.appendChild(opt);
+      });
+
+      toggleQualityVisibility();
+    }
+
+    async function downloadVideo() {
+      const url = document.getElementById("videoUrl").value;
+      const format = document.getElementById("format").value;
+      const quality = document.getElementById("quality").value;
+
+      setStatus("Připravuje se stahování...");
+      setProgress(50);
+
+      setTimeout(() => {
+        const qParam = (format === "mp3") ? "" : `&quality=${quality}`;
+        const downloadUrl = `/api/download?url=${encodeURIComponent(url)}&format=${format}${qParam}`;
+        window.location.href = downloadUrl;
+        setProgress(100);
+        setTimeout(() => setProgress(0), 2000);
+        setStatus("");
+      }, 1000);
+    }
+  </script>
+</body>
+</html>
